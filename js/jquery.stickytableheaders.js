@@ -1,7 +1,8 @@
 /*! Copyright (c) Jonas Mosbech - https://github.com/jmosbech/StickyTableHeaders
 	MIT license info: https://github.com/jmosbech/StickyTableHeaders/blob/master/license.txt */
+/*global module */
 
-;(function ($, window, undefined) {
+module.exports = function ($, window, undefined) {
 	'use strict';
 
 	var name = 'stickyTableHeaders',
@@ -15,6 +16,12 @@
 			objWindow: window,
 			scrollableArea: window,
 			cacheHeaderHeight: false,
+			// 横スクロールエリア
+			optionalHorizontalScrollingArea: null,
+			// 横スクロールに反応させる見出し行
+			optionalStickyHeaderContent: null,
+			// 横スクロール見出し行のzindexオフセット
+			zIndexOffset: 0,
 			zIndex: 3
 		};
 
@@ -55,8 +62,67 @@
 				$this.css('padding', 0);
 
 				base.$originalHeader = $('thead:first', this);
+
 				base.$clonedHeader = base.$originalHeader.clone();
 				$this.trigger('clonedHeader.' + name, [base.$clonedHeader]);
+
+				if (base.$optionalHorizontalScrollingArea) {
+					// 見出し行固定div作成
+					// position: fixedでoverflow: hiddenが無効なので、
+					// 二段構成のdivにする。
+					// 外枠がfixedで、内枠がrelative + overflow: hidden
+					// 外枠の作成
+					base.$fixedHeadContainer = $('<div></div>').css({
+						'position': 'fixed',
+						'top':  0,
+						'left': $(this).offset().left, // オリジナルと同じ位置に配置
+						'display': 'none',
+						'z-index': base.options.zIndex + base.options.zIndexOffset, // 常に上部に表示
+					}).appendTo('body');
+
+					// 内枠の作成
+					base.$fixedHeadContainerContent = $('<div></div>').css({
+						'overflow': 'hidden',
+						'width': base.$optionalHorizontalScrollingArea.width() + 'px',
+					}).appendTo(base.$fixedHeadContainer)
+						.append(base.$optionalStickyHeaderContent);
+
+					// 横にスクロールできるように、relativeにして、スクロールに反応させてleftを調整する
+					base.$optionalStickyHeaderContent.css({
+						'position': 'relative',
+					});
+
+					// カスタムスクロール作成
+					// 元のテーブルのoverflow: hiddenが画面に表示されていないときに
+					// 表示されるスクロールバー
+					// 元のテーブル要素をコピーしてクロールバーだけが表示されるdivを作る
+					base.$scrollableOriginalHeader = $(this).clone();
+					base.$scrollableOriginalHeader.find('tbody').remove();
+
+					// 外枠の作成
+					base.$fixedScrollingbarContainer = $('<div></div>', {
+					}).css({
+						'position': 'fixed',
+						'bottom':  0,
+						'display': 'none',
+						'left': $(this).offset().left,
+						'z-index': base.options.zIndex + base.options.zIndexOffset,
+					}).appendTo('body');
+
+					// 内枠の作成
+					base.$fixedScrollingbarContainerContent = $('<div></div>').css({
+						'overflow-x': 'auto',
+						'overflow-y': 'hidden',
+						'height': 19, // スクロールバーだけ表示する
+						'width': base.$optionalHorizontalScrollingArea.width() + 'px',
+					}).appendTo(base.$fixedScrollingbarContainer)
+						.append(base.$scrollableOriginalHeader);
+
+					// 横にスクロールできるように、relativeにして、スクロールに反応させてleftを調整する
+					base.$scrollableOriginalHeader.css({
+						'position': 'relative',
+					});
+				}
 
 				base.$clonedHeader.addClass('tableFloatingHeader');
 				base.$clonedHeader.css({display: 'none', opacity: 0.0});
@@ -100,8 +166,56 @@
 			base.$el = null;
 		};
 
+		// 固定スクロールバー表示の判定
+		base.bindFixedScrollbar = function(){
+			// テーブル要素の上部の位置
+			var viewPointTop = base.$optionalHorizontalScrollingArea.offset().top;
+			// テーブル要素の下部の位置
+			var viewPointBottom = base.$optionalHorizontalScrollingArea.offset().top + base.$optionalHorizontalScrollingArea.height();
+			// Window座標
+			var windowTop = $(window).scrollTop();
+			var windowBottom = $(window).scrollTop() + $(window).height();
+
+			// 横スクロールバーがない場合は非表示にする
+			if (base.$fixedScrollingbarContainer.width() >= base.$optionalStickyHeaderContent.width()) {
+				base.$fixedScrollingbarContainer.css({display: 'none'});
+				return;
+			}
+			// 対象テーブルが画面に表示されている場合は固定スクロール表示
+			// 1. テーブル上部が表示されている場合
+			// 2. テーブルが画面を占有してる場合
+			if (windowTop < viewPointTop && viewPointTop < windowBottom || viewPointTop < windowTop && windowBottom < viewPointBottom) {
+				base.$fixedScrollingbarContainer.css({display: ''});
+			} else {
+				base.$fixedScrollingbarContainer.css({display: 'none'});
+			}
+		};
+
 		base.bind = function(){
 			base.$scrollableArea.on('scroll.' + name, base.toggleHeaders);
+			if (base.$optionalHorizontalScrollingArea) {
+				base.$optionalHorizontalScrollingArea.on('scroll.' + name, base.toggleHeaders);
+				base.$optionalHorizontalScrollingArea.on('rezise.' + name, base.toggleHeaders);
+				base.$optionalHorizontalScrollingArea.on('rezise.' + name, base.updateWidth);
+
+				// 実態のスクロールバーと固定スクロールバーの同期
+				base.$fixedScrollingbarContainerContent.on('scroll.' + name, function(){
+					base.$optionalHorizontalScrollingArea.scrollLeft($(this).scrollLeft());
+					base.$optionalStickyHeaderContent.css({
+						'left': -$(this).scrollLeft(),
+					});
+				});
+				base.$optionalHorizontalScrollingArea.on('scroll.' + name, function() {
+					base.$fixedScrollingbarContainerContent.scrollLeft($(this).scrollLeft());
+					base.$optionalStickyHeaderContent.css({
+						'left': -$(this).scrollLeft(),
+					});
+				});
+				base.$window.on('scroll.' + name, function(){
+					base.bindFixedScrollbar();
+				});
+			}
+
 			if (!base.isWindowScrolling) {
 				base.$window.on('scroll.' + name + base.id, base.setPositionValues);
 				base.$window.on('resize.' + name + base.id, base.toggleHeaders);
@@ -113,6 +227,10 @@
 		base.unbind = function(){
 			// unbind window events by specifying handle so we don't remove too much
 			base.$scrollableArea.off('.' + name, base.toggleHeaders);
+			if (base.$optionalHorizontalScrollingArea) {
+				base.$optionalHorizontalScrollingArea.off('.' + name, base.toggleHeaders);
+				base.$optionalHorizontalScrollingArea.off('.' + name, base.updateWidth);
+			}
 			if (!base.isWindowScrolling) {
 				base.$window.off('.' + name + base.id, base.setPositionValues);
 				base.$window.off('.' + name + base.id, base.toggleHeaders);
@@ -173,6 +291,24 @@
 						base.leftOffset = newLeft;
 						base.topOffset = newTopOffset;
 						base.$clonedHeader.css('display', '');
+
+						if (base.$optionalHorizontalScrollingArea) {
+							base.$fixedHeadContainer.css({
+								//'left': base.$originalHeader.offset().left - base.$window.scrollLeft(),
+							});
+							base.$fixedHeadContainerContent.css({
+								'width': $('#tableRightScroll').width() + 'px',
+							});
+							base.$fixedScrollingbarContainer.css({
+								//'left': base.$originalHeader.offset().left - base.$window.scrollLeft(),
+							});
+							base.$fixedScrollingbarContainerContent.css({
+								'width': $('#tableRightScroll').width() + 'px',
+							});
+							base.$fixedHeadContainer.css('display', '');
+							base.bindFixedScrollbar();
+						}
+
 						if (!base.isSticky) {
 							base.isSticky = true;
 							// make sure the width is correct: the user might have resized the browser while in static mode
@@ -183,6 +319,12 @@
 					} else if (base.isSticky) {
 						base.$originalHeader.css('position', 'static');
 						base.$clonedHeader.css('display', 'none');
+
+						if (base.$optionalHorizontalScrollingArea) {
+							base.$fixedHeadContainer.css('display', 'none');
+							base.bindFixedScrollbar();
+						}
+
 						base.isSticky = false;
 						base.resetWidth($('td,th', base.$clonedHeader), $('td,th', base.$originalHeader));
 						$this.trigger('disabledStickiness.' + name);
@@ -203,6 +345,24 @@
 				'top': base.topOffset - (base.isWindowScrolling ? 0 : winScrollTop),
 				'left': base.leftOffset - (base.isWindowScrolling ? 0 : winScrollLeft)
 			});
+
+			if (base.$optionalHorizontalScrollingArea) {
+				// windowの横スクロールバーに反応して、固定部のleftを調整
+				var baseOffset = base.$optionalHorizontalScrollingArea.offset().left - winScrollLeft;
+				base.$fixedHeadContainer.css({
+					'left': baseOffset,
+				});
+				base.$fixedHeadContainerContent.css({
+					'left': baseOffset,
+				});
+				base.$fixedScrollingbarContainer.css({
+					'left': baseOffset,
+				});
+				base.$fixedScrollingbarContainerContent.css({
+					'left': baseOffset,
+				});
+			}
+
 		}, 0);
 
 		base.updateWidth = base.debounce(function () {
@@ -290,6 +450,11 @@
 			base.$document = $(base.options.objDocument);
 			base.$scrollableArea = $(base.options.scrollableArea);
 			base.isWindowScrolling = base.$scrollableArea[0] === base.$window[0];
+			// 横スクロール対応するには両方のオプションを必須にする
+			if (base.options.optionalHorizontalScrollingArea && base.options.optionalStickyHeaderContent) {
+				base.$optionalHorizontalScrollingArea= $(base.options.optionalHorizontalScrollingArea);
+				base.$optionalStickyHeaderContent = $(base.options.optionalStickyHeaderContent);
+			}
 		};
 
 		base.updateOptions = function (options) {
@@ -322,4 +487,4 @@
 		});
 	};
 
-})(jQuery, window);
+};
