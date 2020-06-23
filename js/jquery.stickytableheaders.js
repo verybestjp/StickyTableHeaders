@@ -169,15 +169,14 @@ module.exports = function ($, window, undefined) {
 		// 固定スクロールバー表示の判定
 		base.bindFixedScrollbar = function(){
 			// テーブル要素の上部の位置
-			var viewPointTop = base.$optionalHorizontalScrollingArea.offset().top;
+			var viewPointTop = base.$optionalHorizontalScrollingArea.offset().top + $('thead:first', base.$el).height(); // 見出し行が表示された後のポジション
 			// テーブル要素の下部の位置
 			var viewPointBottom = base.$optionalHorizontalScrollingArea.offset().top + base.$optionalHorizontalScrollingArea.height();
 			// Window座標
 			var windowTop = $(window).scrollTop();
 			var windowBottom = $(window).scrollTop() + $(window).height();
-
 			// 横スクロールバーがない場合は非表示にする
-			if (base.$fixedScrollingbarContainer.width() >= base.$optionalStickyHeaderContent.width()) {
+			if (base.$fixedScrollingbarContainer.width() >= base.$el.width()) {
 				base.$fixedScrollingbarContainer.css({display: 'none'});
 				return;
 			}
@@ -293,17 +292,11 @@ module.exports = function ($, window, undefined) {
 						base.$clonedHeader.css('display', '');
 
 						if (base.$optionalHorizontalScrollingArea) {
-							base.$fixedHeadContainer.css({
-								//'left': base.$originalHeader.offset().left - base.$window.scrollLeft(),
-							});
 							base.$fixedHeadContainerContent.css({
-								'width': $('#tableRightScroll').width() + 'px',
-							});
-							base.$fixedScrollingbarContainer.css({
-								//'left': base.$originalHeader.offset().left - base.$window.scrollLeft(),
+								'width': base.$optionalHorizontalScrollingArea.width() + 'px',
 							});
 							base.$fixedScrollingbarContainerContent.css({
-								'width': $('#tableRightScroll').width() + 'px',
+								'width': base.$optionalHorizontalScrollingArea.width() + 'px',
 							});
 							base.$fixedHeadContainer.css('display', '');
 							base.bindFixedScrollbar();
