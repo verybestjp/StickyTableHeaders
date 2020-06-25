@@ -322,6 +322,7 @@ module.exports = function ($, window, undefined) {
 						base.resetWidth($('td,th', base.$clonedHeader), $('td,th', base.$originalHeader));
 						if (base.$optionalHorizontalScrollingArea) {
 							base.resetWidth($('th,td', base.$optionalStickyHeaderContent), $('td,th', base.$originalHeader));
+							base.resetWidth($('th,td', base.$scrollableOriginalHeader), $('td,th', base.$originalHeader));
 						}
 						$this.trigger('disabledStickiness.' + name);
 					}
@@ -376,6 +377,7 @@ module.exports = function ($, window, undefined) {
 			base.setWidth(cellWidths, base.$clonedHeaderCells, base.$originalHeaderCells);
 			if (base.$optionalHorizontalScrollingArea) {
 				base.setWidth(cellWidths, base.$clonedHeaderCells, $('th,td', base.$optionalStickyHeaderContent));
+				base.setWidth(cellWidths, base.$clonedHeaderCells, $('th,td', base.$scrollableOriginalHeader));
 			}
 			// Copy row width from whole table
 			base.$originalHeader.css('width', base.$clonedHeader.width());
