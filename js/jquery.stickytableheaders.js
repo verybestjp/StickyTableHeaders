@@ -320,6 +320,9 @@ module.exports = function ($, window, undefined) {
 
 						base.isSticky = false;
 						base.resetWidth($('td,th', base.$clonedHeader), $('td,th', base.$originalHeader));
+						if (base.$optionalHorizontalScrollingArea) {
+							base.resetWidth($('th,td', base.$optionalStickyHeaderContent), $('td,th', base.$originalHeader));
+						}
 						$this.trigger('disabledStickiness.' + name);
 					}
 				});
@@ -371,7 +374,9 @@ module.exports = function ($, window, undefined) {
 			}
 			var cellWidths = base.getWidth(base.$clonedHeaderCells);
 			base.setWidth(cellWidths, base.$clonedHeaderCells, base.$originalHeaderCells);
-
+			if (base.$optionalHorizontalScrollingArea) {
+				base.setWidth(cellWidths, base.$clonedHeaderCells, $('th,td', base.$optionalStickyHeaderContent));
+			}
 			// Copy row width from whole table
 			base.$originalHeader.css('width', base.$clonedHeader.width());
 
