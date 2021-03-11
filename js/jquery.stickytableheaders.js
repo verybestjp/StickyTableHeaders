@@ -20,6 +20,8 @@ module.exports = function ($, window, undefined) {
 			optionalHorizontalScrollingArea: null,
 			// 横スクロールに反応させる見出し行
 			optionalStickyHeaderContent: null,
+			// 横スクロールよりz-indexが大きいコンテンツ
+			optionalStickyHeaderHidden: null,
 			// 横スクロール見出し行のzindexオフセット
 			zIndexOffset: 0,
 			zIndex: 3
@@ -74,7 +76,7 @@ module.exports = function ($, window, undefined) {
 					// 外枠の作成
 					base.$fixedHeadContainer = $('<div></div>').css({
 						'position': 'fixed',
-						'top':  0,
+						'top':	0,
 						'left': $(this).offset().left, // オリジナルと同じ位置に配置
 						'display': 'none',
 						'z-index': base.options.zIndex + base.options.zIndexOffset, // 常に上部に表示
@@ -82,7 +84,6 @@ module.exports = function ($, window, undefined) {
 
 					// 内枠の作成
 					base.$fixedHeadContainerContent = $('<div></div>').css({
-						'overflow': 'hidden',
 						'width': base.$optionalHorizontalScrollingArea.width() + 'px',
 					}).appendTo(base.$fixedHeadContainer)
 						.append(base.$optionalStickyHeaderContent);
@@ -103,7 +104,7 @@ module.exports = function ($, window, undefined) {
 					base.$fixedScrollingbarContainer = $('<div></div>', {
 					}).css({
 						'position': 'fixed',
-						'bottom':  0,
+						'bottom':	0,
 						'display': 'none',
 						'left': $(this).offset().left,
 						'z-index': base.options.zIndex + base.options.zIndexOffset,
@@ -121,6 +122,11 @@ module.exports = function ($, window, undefined) {
 					// 横にスクロールできるように、relativeにして、スクロールに反応させてleftを調整する
 					base.$scrollableOriginalHeader.css({
 						'position': 'relative',
+					});
+
+					base.$optionalStickyHeaderHidden.css({
+						position: 'relative',
+						'z-index': base.options.zIndex + base.options.zIndexOffset + 1,
 					});
 				}
 
@@ -283,7 +289,7 @@ module.exports = function ($, window, undefined) {
 						base.$originalHeader.css({
 							'position': 'fixed',
 							'margin-top': base.options.marginTop,
-                                                        'top': 0,
+																												'top': 0,
 							'left': newLeft,
 							'z-index': base.options.zIndex
 						});
@@ -454,6 +460,7 @@ module.exports = function ($, window, undefined) {
 			if (base.options.optionalHorizontalScrollingArea && base.options.optionalStickyHeaderContent) {
 				base.$optionalHorizontalScrollingArea= $(base.options.optionalHorizontalScrollingArea);
 				base.$optionalStickyHeaderContent = $(base.options.optionalStickyHeaderContent);
+				base.$optionalStickyHeaderHidden = $(base.options.optionalStickyHeaderHidden);
 			}
 		};
 
