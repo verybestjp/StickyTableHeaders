@@ -124,7 +124,7 @@ module.exports = function ($, window, undefined) {
 						'position': 'relative',
 					});
 
-					if (base.$optionalStickyHeaderHidden) {
+					if (base.$optionalStickyHeaderHidden.length > 0) {
 						var backgroundColor = '#fff';
 						if (window.getComputedStyle) {
 							backgroundColor = window.getComputedStyle(base.$optionalStickyHeaderHidden[0], null).getPropertyValue('background-color');
