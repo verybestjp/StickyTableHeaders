@@ -124,10 +124,21 @@ module.exports = function ($, window, undefined) {
 						'position': 'relative',
 					});
 
-					base.$optionalStickyHeaderHidden.css({
-						position: 'relative',
-						'z-index': base.options.zIndex + base.options.zIndexOffset + 1,
-					});
+					if (base.$optionalStickyHeaderHidden) {
+						var backgroundColor = '#fff';
+						if (window.getComputedStyle) {
+							backgroundColor = window.getComputedStyle(base.$optionalStickyHeaderHidden[0], null).getPropertyValue('background-color');
+							if (backgroundColor === 'rgba(0, 0, 0, 0)' || backgroundColor === 'transparent') {
+								backgroundColor = '#fff';
+							}
+						}
+						base.$optionalStickyHeaderHidden.css({
+							position: 'relative',
+							// IEではrelative要素に対してz-indexは効かない
+							'z-index': base.options.zIndex + base.options.zIndexOffset + 1,
+							'background-color': backgroundColor,
+						});
+					}
 				}
 
 				base.$clonedHeader.addClass('tableFloatingHeader');
@@ -460,7 +471,9 @@ module.exports = function ($, window, undefined) {
 			if (base.options.optionalHorizontalScrollingArea && base.options.optionalStickyHeaderContent) {
 				base.$optionalHorizontalScrollingArea= $(base.options.optionalHorizontalScrollingArea);
 				base.$optionalStickyHeaderContent = $(base.options.optionalStickyHeaderContent);
-				base.$optionalStickyHeaderHidden = $(base.options.optionalStickyHeaderHidden);
+				if (base.options.optionalStickyHeaderHidden) {
+					base.$optionalStickyHeaderHidden = $(base.options.optionalStickyHeaderHidden);
+				}
 			}
 		};
 
