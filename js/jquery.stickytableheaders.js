@@ -66,6 +66,11 @@ module.exports = function ($, window, undefined) {
 				base.$originalHeader = $('thead:first', this);
 
 				base.$clonedHeader = base.$originalHeader.clone();
+				base.$clonedHeader.find('[id]').each(function(){
+					var current = $(this);
+					current.removeAttr('id');
+				});
+
 				$this.trigger('clonedHeader.' + name, [base.$clonedHeader]);
 
 				if (base.$optionalHorizontalScrollingArea) {
