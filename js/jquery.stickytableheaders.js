@@ -7,6 +7,7 @@ module.exports = function ($, window, undefined) {
 
 	var name = 'stickyTableHeaders',
 		id = 0,
+		TDTH_SELECTOR = 'th:not(td td, th th, td th, th td), td:not(td td, th th, td th, th td)',
 		defaults = {
 			fixedOffset: 0,
 			leftOffset: 0,
@@ -341,10 +342,10 @@ module.exports = function ($, window, undefined) {
 						}
 
 						base.isSticky = false;
-						base.resetWidth($('td,th', base.$clonedHeader), $('td,th', base.$originalHeader));
+						base.resetWidth($(TDTH_SELECTOR, base.$clonedHeader), $(TDTH_SELECTOR, base.$originalHeader));
 						if (base.$optionalHorizontalScrollingArea) {
-							base.resetWidth($('th,td', base.$optionalStickyHeaderContent), $('td,th', base.$originalHeader));
-							base.resetWidth($('th,td', base.$scrollableOriginalHeader), $('td,th', base.$originalHeader));
+							base.resetWidth($(TDTH_SELECTOR, base.$optionalStickyHeaderContent), $(TDTH_SELECTOR, base.$originalHeader));
+							base.resetWidth($(TDTH_SELECTOR, base.$scrollableOriginalHeader), $(TDTH_SELECTOR, base.$originalHeader));
 						}
 						$this.trigger('disabledStickiness.' + name);
 					}
@@ -390,16 +391,16 @@ module.exports = function ($, window, undefined) {
 			}
 			// Copy cell widths from clone
 			if (!base.$originalHeaderCells) {
-				base.$originalHeaderCells = $('th,td', base.$originalHeader);
+				base.$originalHeaderCells = $(TDTH_SELECTOR, base.$originalHeader);
 			}
 			if (!base.$clonedHeaderCells) {
-				base.$clonedHeaderCells = $('th,td', base.$clonedHeader);
+				base.$clonedHeaderCells = $(TDTH_SELECTOR, base.$clonedHeader);
 			}
 			var cellWidths = base.getWidth(base.$clonedHeaderCells);
 			base.setWidth(cellWidths, base.$clonedHeaderCells, base.$originalHeaderCells);
 			if (base.$optionalHorizontalScrollingArea) {
-				base.setWidth(cellWidths, base.$clonedHeaderCells, $('th,td', base.$optionalStickyHeaderContent));
-				base.setWidth(cellWidths, base.$clonedHeaderCells, $('th,td', base.$scrollableOriginalHeader));
+				base.setWidth(cellWidths, base.$clonedHeaderCells, $(TDTH_SELECTOR, base.$optionalStickyHeaderContent));
+				base.setWidth(cellWidths, base.$clonedHeaderCells, $(TDTH_SELECTOR, base.$scrollableOriginalHeader));
 			}
 			// Copy row width from whole table
 			base.$originalHeader.css('width', base.$clonedHeader.width());
