@@ -8,6 +8,7 @@ module.exports = function ($, window, undefined) {
 	var name = 'stickyTableHeaders',
 		id = 0,
 		TDTH_SELECTOR = 'th:not(td td, th th, td th, th td), td:not(td td, th th, td th, th td)',
+		THEAD_SELECTOR = 'thead:first:not(thead thead)',
 		defaults = {
 			fixedOffset: 0,
 			leftOffset: 0,
@@ -64,7 +65,7 @@ module.exports = function ($, window, undefined) {
 				// remove padding on <table> to fix issue #7
 				$this.css('padding', 0);
 
-				base.$originalHeader = $('thead:first', this);
+				base.$originalHeader = $(THEAD_SELECTOR, this);
 
 				base.$clonedHeader = base.$originalHeader.clone();
 				base.$clonedHeader.find('[id]').each(function(){
@@ -192,7 +193,7 @@ module.exports = function ($, window, undefined) {
 		// 固定スクロールバー表示の判定
 		base.bindFixedScrollbar = function(){
 			// テーブル要素の上部の位置
-			var viewPointTop = base.$optionalHorizontalScrollingArea.offset().top + $('thead:first', base.$el).height(); // 見出し行が表示された後のポジション
+			var viewPointTop = base.$optionalHorizontalScrollingArea.offset().top + $(THEAD_SELECTOR, base.$el).height(); // 見出し行が表示された後のポジション
 			// テーブル要素の下部の位置
 			var viewPointBottom = base.$optionalHorizontalScrollingArea.offset().top + base.$optionalHorizontalScrollingArea.height();
 			// Window座標
