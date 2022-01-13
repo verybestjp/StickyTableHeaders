@@ -192,6 +192,9 @@ module.exports = function ($, window, undefined) {
 
 		// 固定スクロールバー表示の判定
 		base.bindFixedScrollbar = function(){
+			if (!base.$optionalHorizontalScrollingArea) {
+				return;
+			}
 			// テーブル要素の上部の位置
 			var viewPointTop = base.$optionalHorizontalScrollingArea.offset().top + $(THEAD_SELECTOR, base.$el).height(); // 見出し行が表示された後のポジション
 			// テーブル要素の下部の位置
