@@ -192,7 +192,7 @@ module.exports = function ($, window, undefined) {
 
 		// 固定スクロールバー表示の判定
 		base.bindFixedScrollbar = function(){
-			if (!base.$optionalHorizontalScrollingArea) {
+			if (!base.$optionalHorizontalScrollingArea || !base.$optionalHorizontalScrollingArea.offset()) {
 				return;
 			}
 			// テーブル要素の上部の位置
