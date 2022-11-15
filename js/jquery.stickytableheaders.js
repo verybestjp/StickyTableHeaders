@@ -183,8 +183,18 @@ module.exports = function ($, window, undefined) {
 
 			base.$clonedHeader.remove();
 			base.$originalHeader.removeClass('tableFloatingHeaderOriginal');
+			base.$originalHeader.attr('style', '');
 			base.$originalHeader.css('visibility', 'visible');
 			base.$printStyle.remove();
+
+			// 外枠divの削除
+			if (base.$optionalStickyHeaderContent) {
+				base.$fixedHeadContainerContent.unwrap();
+				base.$optionalStickyHeaderContent.unwrap();
+			}
+			if (base.$fixedScrollingbarContainer) {
+				base.$fixedScrollingbarContainer.remove();
+			}
 
 			base.el = null;
 			base.$el = null;
@@ -217,6 +227,20 @@ module.exports = function ($, window, undefined) {
 			}
 		};
 
+		base.syncFixedScroll = function () {
+			base.$optionalHorizontalScrollingArea.scrollLeft($(this).scrollLeft());
+			base.$optionalStickyHeaderContent.css({
+				'left': -$(this).scrollLeft(),
+			});
+		};
+
+		base.syncOptionalScroll = function () {
+			base.$fixedScrollingbarContainerContent.scrollLeft($(this).scrollLeft());
+			base.$optionalStickyHeaderContent.css({
+				'left': -$(this).scrollLeft(),
+			});
+		};
+
 		base.bind = function(){
 			base.$scrollableArea.on('scroll.' + name, base.toggleHeaders);
 			if (base.$optionalHorizontalScrollingArea) {
@@ -225,21 +249,9 @@ module.exports = function ($, window, undefined) {
 				base.$optionalHorizontalScrollingArea.on('rezise.' + name, base.updateWidth);
 
 				// 実態のスクロールバーと固定スクロールバーの同期
-				base.$fixedScrollingbarContainerContent.on('scroll.' + name, function(){
-					base.$optionalHorizontalScrollingArea.scrollLeft($(this).scrollLeft());
-					base.$optionalStickyHeaderContent.css({
-						'left': -$(this).scrollLeft(),
-					});
-				});
-				base.$optionalHorizontalScrollingArea.on('scroll.' + name, function() {
-					base.$fixedScrollingbarContainerContent.scrollLeft($(this).scrollLeft());
-					base.$optionalStickyHeaderContent.css({
-						'left': -$(this).scrollLeft(),
-					});
-				});
-				base.$window.on('scroll.' + name, function(){
-					base.bindFixedScrollbar();
-				});
+				base.$fixedScrollingbarContainerContent.on('scroll.' + name, base.syncFixedScroll);
+				base.$optionalHorizontalScrollingArea.on('scroll.' + name, base.syncOptionalScroll);
+				base.$window.on('scroll.' + name, base.bindFixedScrollbar());
 			}
 
 			if (!base.isWindowScrolling) {
@@ -253,15 +265,19 @@ module.exports = function ($, window, undefined) {
 		base.unbind = function(){
 			// unbind window events by specifying handle so we don't remove too much
 			base.$scrollableArea.off('.' + name, base.toggleHeaders);
-			if (base.$optionalHorizontalScrollingArea) {
-				base.$optionalHorizontalScrollingArea.off('.' + name, base.toggleHeaders);
-				base.$optionalHorizontalScrollingArea.off('.' + name, base.updateWidth);
-			}
+			base.$scrollableArea.off('.' + name, base.updateWidth);
 			if (!base.isWindowScrolling) {
 				base.$window.off('.' + name + base.id, base.setPositionValues);
 				base.$window.off('.' + name + base.id, base.toggleHeaders);
+				base.$window.off('.' + name, base.bindFixedScrollbar());
 			}
-			base.$scrollableArea.off('.' + name, base.updateWidth);
+
+			if (base.$optionalHorizontalScrollingArea) {
+				base.$optionalHorizontalScrollingArea.off('.' + name, base.toggleHeaders);
+				base.$optionalHorizontalScrollingArea.off('.' + name, base.updateWidth);
+				base.$fixedScrollingbarContainerContent.off('.' + name, base.syncFixedScrol);
+				base.$optionalHorizontalScrollingArea.on('.' + name, base.syncOptionalScroll);
+			}
 		};
 
 		// We debounce the functions bound to the scroll and resize events
@@ -305,12 +321,21 @@ module.exports = function ($, window, undefined) {
 							(offset.top + $this.height() - headerHeight - (base.isWindowScrolling ? 0 : newTopOffset));
 					}
 
+					if (base.$optionalHorizontalScrollingArea) {
+						base.$fixedHeadContainerContent.css({
+							'width': base.$optionalHorizontalScrollingArea.width() + 'px',
+						});
+						base.$fixedScrollingbarContainerContent.css({
+							'width': base.$optionalHorizontalScrollingArea.width() + 'px',
+						});
+					}
+
 					if (scrolledPastTop && notScrolledPastBottom) {
 						newLeft = offset.left - scrollLeft + base.options.leftOffset;
 						base.$originalHeader.css({
 							'position': 'fixed',
 							'margin-top': base.options.marginTop,
-																												'top': 0,
+							'top': 0,
 							'left': newLeft,
 							'z-index': base.options.zIndex
 						});
@@ -319,12 +344,6 @@ module.exports = function ($, window, undefined) {
 						base.$clonedHeader.css('display', '');
 
 						if (base.$optionalHorizontalScrollingArea) {
-							base.$fixedHeadContainerContent.css({
-								'width': base.$optionalHorizontalScrollingArea.width() + 'px',
-							});
-							base.$fixedScrollingbarContainerContent.css({
-								'width': base.$optionalHorizontalScrollingArea.width() + 'px',
-							});
 							base.$fixedHeadContainer.css('display', '');
 							base.bindFixedScrollbar();
 						}
@@ -477,9 +496,10 @@ module.exports = function ($, window, undefined) {
 			base.$document = $(base.options.objDocument);
 			base.$scrollableArea = $(base.options.scrollableArea);
 			base.isWindowScrolling = base.$scrollableArea[0] === base.$window[0];
+
 			// 横スクロール対応するには両方のオプションを必須にする
 			if (base.options.optionalHorizontalScrollingArea && base.options.optionalStickyHeaderContent) {
-				base.$optionalHorizontalScrollingArea= $(base.options.optionalHorizontalScrollingArea);
+				base.$optionalHorizontalScrollingArea = $(base.options.optionalHorizontalScrollingArea);
 				base.$optionalStickyHeaderContent = $(base.options.optionalStickyHeaderContent);
 				if (base.options.optionalStickyHeaderHidden) {
 					base.$optionalStickyHeaderHidden = $(base.options.optionalStickyHeaderHidden);
