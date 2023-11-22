@@ -209,18 +209,30 @@ module.exports = function ($, window, undefined) {
 			var viewPointTop = base.$optionalHorizontalScrollingArea.offset().top + $(THEAD_SELECTOR, base.$el).height(); // 見出し行が表示された後のポジション
 			// テーブル要素の下部の位置
 			var viewPointBottom = base.$optionalHorizontalScrollingArea.offset().top + base.$optionalHorizontalScrollingArea.height();
-			// Window座標
+			// Window座標 縦スクロール移動分を含む
 			var windowTop = $(window).scrollTop();
+			// スクロール移動後の表示位置 描画領域(0, 0)からスクロール移動分を追加
 			var windowBottom = $(window).scrollTop() + $(window).height();
+
 			// 横スクロールバーがない場合は非表示にする
-			if (base.$fixedScrollingbarContainer.width() >= base.$el.width()) {
+			if (base.$el && Math.floor(base.$fixedScrollingbarContainer.width()) >= Math.floor(base.$el.width())) {
 				base.$fixedScrollingbarContainer.css({display: 'none'});
 				return;
 			}
+
 			// 対象テーブルが画面に表示されている場合は固定スクロール表示
 			// 1. テーブル上部が表示されている場合
 			// 2. テーブルが画面を占有してる場合
-			if (windowTop < viewPointTop && viewPointTop < windowBottom || viewPointTop < windowTop && windowBottom < viewPointBottom) {
+
+			// テーブルのスクロールバーが表示されている
+			var isTableHorizontalScrollVisible = windowBottom > viewPointBottom;
+			if (isTableHorizontalScrollVisible) {
+				base.$fixedScrollingbarContainer.css({display: 'none'});
+				return;
+			}
+
+			if (windowTop < viewPointTop && viewPointTop < windowBottom ||
+				viewPointTop < windowTop && windowBottom < viewPointBottom) {
 				base.$fixedScrollingbarContainer.css({display: ''});
 			} else {
 				base.$fixedScrollingbarContainer.css({display: 'none'});
@@ -244,18 +256,19 @@ module.exports = function ($, window, undefined) {
 		base.bind = function(){
 			base.$scrollableArea.on('scroll.' + name, base.toggleHeaders);
 			if (base.$optionalHorizontalScrollingArea) {
-				base.$optionalHorizontalScrollingArea.on('scroll.' + name, base.toggleHeaders);
 				base.$optionalHorizontalScrollingArea.on('rezise.' + name, base.toggleHeaders);
 				base.$optionalHorizontalScrollingArea.on('rezise.' + name, base.updateWidth);
 
+				// overflow対策
+				window.addEventListener('scroll', base.bindFixedScrollbar);
+				window.addEventListener('scroll', base.toggleHeaders);
 				// 実態のスクロールバーと固定スクロールバーの同期
 				base.$fixedScrollingbarContainerContent.on('scroll.' + name, base.syncFixedScroll);
 				base.$optionalHorizontalScrollingArea.on('scroll.' + name, base.syncOptionalScroll);
-				base.$window.on('scroll.' + name, base.bindFixedScrollbar());
 			}
 
 			if (!base.isWindowScrolling) {
-				base.$window.on('scroll.' + name + base.id, base.setPositionValues);
+				window.addEventListener('scroll', base.setPositionValues);
 				base.$window.on('resize.' + name + base.id, base.toggleHeaders);
 			}
 			base.$scrollableArea.on('resize.' + name, base.toggleHeaders);
@@ -266,10 +279,11 @@ module.exports = function ($, window, undefined) {
 			// unbind window events by specifying handle so we don't remove too much
 			base.$scrollableArea.off('.' + name, base.toggleHeaders);
 			base.$scrollableArea.off('.' + name, base.updateWidth);
+			window.removeEventListener('scroll', base.toggleHeaders);
+			window.removeEventListener('scroll', base.bindFixedScrollbar);
 			if (!base.isWindowScrolling) {
 				base.$window.off('.' + name + base.id, base.setPositionValues);
-				base.$window.off('.' + name + base.id, base.toggleHeaders);
-				base.$window.off('.' + name, base.bindFixedScrollbar());
+				window.removeEventListener('scroll', base.setPositionValues);
 			}
 
 			if (base.$optionalHorizontalScrollingArea) {
