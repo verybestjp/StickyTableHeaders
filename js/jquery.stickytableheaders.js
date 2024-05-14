@@ -118,10 +118,10 @@ module.exports = function ($, window, undefined) {
 					}).appendTo('body');
 
 					// 内枠の作成
-					base.$fixedScrollingbarContainerContent = $('<div></div>').css({
+					base.$fixedScrollingbarContainerContent = $('<div></div>').addClass('pesdoScroll').css({
 						'overflow-x': 'auto',
 						'overflow-y': 'hidden',
-						'height': 19, // スクロールバーだけ表示する
+						'height': 17, // スクロールバーだけ表示する
 						'width': base.$optionalHorizontalScrollingArea.width() + 'px',
 					}).appendTo(base.$fixedScrollingbarContainer)
 						.append(base.$scrollableOriginalHeader);
