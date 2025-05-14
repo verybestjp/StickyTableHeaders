@@ -7,7 +7,7 @@ module.exports = function ($, window, undefined) {
 
 	var name = 'stickyTableHeaders',
 		id = 0,
-		TDTH_SELECTOR = 'th:not(td td, th th, td th, th td), td:not(td td, th th, td th, th td)',
+		TDTH_SELECTOR = 'table:not(.stickyNotResize) th:not(td td, th th, td th, th td), table:not(.stickyNotResize) td:not(td td, th th, td th, th td)',
 		THEAD_SELECTOR = 'thead:first:not(thead thead)',
 		defaults = {
 			fixedOffset: 0,
@@ -92,6 +92,7 @@ module.exports = function ($, window, undefined) {
 					// 内枠の作成
 					base.$fixedHeadContainerContent = $('<div></div>').css({
 						'width': base.$optionalHorizontalScrollingArea.width() + 'px',
+						'overflow': 'hidden',
 					}).appendTo(base.$fixedHeadContainer)
 						.append(base.$optionalStickyHeaderContent);
 
@@ -441,6 +442,9 @@ module.exports = function ($, window, undefined) {
 			}
 			// Copy row width from whole table
 			base.$originalHeader.css('width', base.$clonedHeader.width());
+			if (base.$optionalStickyHeaderContent) {
+				base.$optionalStickyHeaderContent.css('width', base.$clonedHeader.width());
+			}
 
 			// If we're caching the height, we need to update the cached value when the width changes
 			if (base.options.cacheHeaderHeight) {
