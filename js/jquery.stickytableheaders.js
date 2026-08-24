@@ -29,6 +29,16 @@ module.exports = function ($, window, undefined) {
 			zIndex: 3
 		};
 
+  // jQuery(TDTH_SELECTOR, context)は、TDTH_SELECTORのように祖先方向に'table'を要求する
+  // 複合セレクタに対して、contextがtableの祖先ではなく子孫(thead等)の場合に常に空集合を返すことがあるため、
+  // ネイティブのquerySelectorAllを使って取得しjQueryオブジェクトでラップする
+  function findTdthCells($context) {
+    if (!$context || !$context.length) {
+      return $();
+    }
+    return $($context.get(0).querySelectorAll(TDTH_SELECTOR));
+  }
+
 	function Plugin (el, options) {
 		// To avoid scope issues, use 'base' instead of 'this'
 		// to reference this class from internal events and functions.
@@ -380,10 +390,10 @@ module.exports = function ($, window, undefined) {
 						}
 
 						base.isSticky = false;
-						base.resetWidth($(TDTH_SELECTOR, base.$clonedHeader), $(TDTH_SELECTOR, base.$originalHeader));
+						base.resetWidth(findTdthCells(base.$clonedHeader), findTdthCells(base.$originalHeader));
 						if (base.$optionalHorizontalScrollingArea) {
-							base.resetWidth($(TDTH_SELECTOR, base.$optionalStickyHeaderContent), $(TDTH_SELECTOR, base.$originalHeader));
-							base.resetWidth($(TDTH_SELECTOR, base.$scrollableOriginalHeader), $(TDTH_SELECTOR, base.$originalHeader));
+							base.resetWidth(findTdthCells(base.$optionalStickyHeaderContent), findTdthCells(base.$originalHeader));
+							base.resetWidth(findTdthCells(base.$scrollableOriginalHeader), findTdthCells(base.$originalHeader));
 						}
 						$this.trigger('disabledStickiness.' + name);
 					}
@@ -429,16 +439,16 @@ module.exports = function ($, window, undefined) {
 			}
 			// Copy cell widths from clone
 			if (!base.$originalHeaderCells) {
-				base.$originalHeaderCells = $(TDTH_SELECTOR, base.$originalHeader);
+				base.$originalHeaderCells = findTdthCells(base.$originalHeader);
 			}
 			if (!base.$clonedHeaderCells) {
-				base.$clonedHeaderCells = $(TDTH_SELECTOR, base.$clonedHeader);
+				base.$clonedHeaderCells = findTdthCells(base.$clonedHeader);
 			}
 			var cellWidths = base.getWidth(base.$clonedHeaderCells);
 			base.setWidth(cellWidths, base.$clonedHeaderCells, base.$originalHeaderCells);
 			if (base.$optionalHorizontalScrollingArea) {
-				base.setWidth(cellWidths, base.$clonedHeaderCells, $(TDTH_SELECTOR, base.$optionalStickyHeaderContent));
-				base.setWidth(cellWidths, base.$clonedHeaderCells, $(TDTH_SELECTOR, base.$scrollableOriginalHeader));
+				base.setWidth(cellWidths, base.$clonedHeaderCells, findTdthCells(base.$optionalStickyHeaderContent));
+				base.setWidth(cellWidths, base.$clonedHeaderCells, findTdthCells(base.$scrollableOriginalHeader));
 			}
 			// Copy row width from whole table
 			base.$originalHeader.css('width', base.$clonedHeader.width());
